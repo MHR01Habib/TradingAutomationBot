@@ -1,3 +1,7 @@
+![n8n gate workflow](workflow.png)
+
+*The six-gate signal chain in n8n. Each gate passes control to the next only if its condition is met; the first failure stops the chain. The PM Bars node reads from the Python/Flask bridge (`host.docker.internal`) while others still call the market-data API, showing the data-source migration in progress.*
+
 # Rule-Based Market Signal Automation
 
 An event-driven automation that evaluates live market data through a chain of
@@ -5,7 +9,7 @@ sequential rule "gates" and logs a signal only when every condition passes.
 Built to remove discretionary judgment from a trading strategy by encoding it
 as deterministic, testable logic.
 
-**Status:** Validation phase — runs on a schedule and logs signals only.
+**Status:** Validation phase. Runs on a schedule and logs signals only.
 No live order execution.
 
 ---
@@ -17,7 +21,7 @@ The system is split into two parts that communicate over HTTP:
 **1. Signal Engine (n8n + JavaScript)**
 Six sequential rule-gates run in a self-hosted n8n workflow (Docker). Each gate
 only executes if the previous one passed, so the first failed condition
-short-circuits the whole chain — no trade.
+short-circuits the whole chain, and no trade is logged.
 
 **2. Data Bridge (Python + Flask)**
 A lightweight Flask microservice wraps a broker SDK and exposes JSON HTTP
@@ -25,20 +29,19 @@ endpoints. It is schema-matched to the market-data REST API the workflow
 originally used, so the data source can be swapped with zero changes to the
 gate logic.
 
-
 ---
 
 ## The Gate Logic
 
 | Gate | Rule |
 |------|------|
-| 1 — Premarket Break | Price breaks above the premarket high |
-| 2 — Market Strength | Index (QQQ) is above its open **and** rising |
-| 3 — Zone Detection  | Identify live imbalance zones above the break level |
-| 4 — Return          | Price returns into one of those zones |
-| 5 — Reaction        | Strong rejection candle + confirmation |
-| 5b — Invalidation   | Cancel if an opposing imbalance formed on the pullback |
-| 6 — Verdict         | Reaction valid **and** not invalidated → log signal |
+| 1. Premarket Break | Price breaks above the premarket high |
+| 2. Market Strength | Index (QQQ) is above its open **and** rising |
+| 3. Zone Detection  | Identify live imbalance zones above the break level |
+| 4. Return          | Price returns into one of those zones |
+| 5. Reaction        | Strong rejection candle + confirmation |
+| 5b. Invalidation   | Cancel if an opposing imbalance formed on the pullback |
+| 6. Verdict         | Reaction valid **and** not invalidated, then log signal |
 
 ---
 
@@ -68,7 +71,6 @@ gate logic.
 
 This project was developed in collaboration with AI coding assistants (Claude),
 used for architecture design, debugging production errors, translating logic
-between JavaScript and Python, and learning Python from a beginner baseline.
+between JavaScript and Python.
 AI accelerated the build while I owned every design decision and verified all
 logic through manual testing with controlled inputs.
-
